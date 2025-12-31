@@ -12,6 +12,8 @@ This lab demonstrates how to monitor and analyze network traffic using Wireshark
 - Understand IP addresses, ports, and the concept of open vs closed ports.
 - Document observations like a SOC analyst.🛡️
 
+---
+
  🧪 Lab Environment
 
 - OS: Linux VM (e.g., Kali/Ubuntu) running in Oracle VirtualBox.
@@ -21,6 +23,8 @@ This lab demonstrates how to monitor and analyze network traffic using Wireshark
 - Example servers:
   - DNS server: `10.0.2.3`
   - Web server: `34.107.221.82` (Firefox connectivity check).[page:1]
+
+---
 
  🧵 High‑Level Workflow
 
@@ -36,6 +40,8 @@ This lab demonstrates how to monitor and analyze network traffic using Wireshark
    - HTTP GET and HTTP 200 OK messages.
 5. Stop capture and save the `.pcapng` file.
 
+---
+
  🧠 Key Concepts (Quick Glossary)
 
 - **Wireshark** – Open‑source network protocol analyzer used to capture and inspect packets for troubleshooting and security monitoring.
@@ -49,11 +55,15 @@ This lab demonstrates how to monitor and analyze network traffic using Wireshark
 - **DNS** – Domain Name System that translates domain names (e.g., `example.com`) to IP addresses.
 - **IP Address** – Numerical address (IPv4/IPv6) used by routers to deliver packets between source and destination.
 
+---
+
  📂 Repo Structure
 
 - README.md – This file.
 - report.md – Detailed analysis and explanations.
 - screenshots – Wireshark screenshots for DNS, HTTP, and TCP sessions.
+
+---
 
  ✅ Learning Outcomes
 
