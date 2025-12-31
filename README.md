@@ -17,12 +17,12 @@ This lab demonstrates how to monitor and analyze network traffic using Wireshark
  🧪 Lab Environment
 
 - OS: Linux VM (e.g., Kali/Ubuntu) running in Oracle VirtualBox.
-- Tool: Wireshark (GUI) for packet capture and analysis.[page:1][web:20]
+- Tool: Wireshark (GUI) for packet capture and analysis.
 - Interface: `eth0` selected as capture interface.
 - Typical client IP: `10.0.2.15` (VM).
 - Example servers:
   - DNS server: `10.0.2.3`
-  - Web server: `34.107.221.82` (Firefox connectivity check).[page:1]
+  - Web server: `34.107.221.82` (Firefox connectivity check).
 
 ---
 
