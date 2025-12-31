@@ -1,0 +1,140 @@
+# 🔍 SOC Network Traffic Analysis Report – Wireshark Lab
+
+## 1. Overview
+
+This report documents the analysis of network traffic captured from a Linux VM using Wireshark, focusing on TCP, UDP, ports, HTTP, DNS, and IP addresses. The objective is to interpret the traffic like a SOC analyst while explaining core networking concepts.📊
+
+The traffic primarily consists of DNS lookups, HTTP requests to Firefox connectivity endpoints, and related TCP sessions, representing a normal browsing scenario rather than malicious activity.[page:1][web:29]
+
+---
+
+## 2. Tools and Core Concepts
+
+### 2.1 What is Wireshark? 🐬
+
+Wireshark is an open‑source network protocol analyzer that captures packets from a network interface and displays them with details like source/destination IPs, ports, protocol fields, and payloads.[page:1][web:9] It is widely used by network engineers and security analysts for troubleshooting, protocol analysis, and incident investigations.[page:1][web:10]
+
+In this lab, Wireshark is used to:
+
+- Capture live traffic on `eth0`.
+- Filter on DNS (`udp.port == 53`), HTTP (`http`), and TCP (`tcp.port == 80`).
+- Inspect packet headers and payloads at different OSI layers.[page:1][web:20]
+
+### 2.2 What is TCP?
+
+Transmission Control Protocol (TCP) is a **reliable** transport‑layer protocol that ensures ordered, error‑checked delivery of data between two endpoints.[page:0][web:15] It uses sequence numbers, acknowledgments, retransmissions, and flow control to guarantee that all bytes reach the destination correctly.[page:0][web:12]
+
+In the capture:
+
+- TCP is used between `10.0.2.15` and `34.107.221.82` for HTTP communication over port 80.[page:1]  
+- The session shows the classic establishment, data transfer, and termination phases.
+
+### 2.3 What is UDP?
+
+User Datagram Protocol (UDP) is a connectionless transport‑layer protocol that sends datagrams without establishing a session or guaranteeing delivery.[page:0][web:18] It trades reliability for low overhead and latency, making it suitable for DNS, VoIP, and streaming.[page:0]
+
+In the capture:
+
+- DNS traffic between `10.0.2.15` and `10.0.2.3` uses UDP port 53.[page:1][web:29]  
+- Each DNS query is a single UDP packet, and the answer is another packet; there is no handshake or retransmission logic at the UDP layer.
+
+### 2.4 TCP Three‑Way Handshake (SYN, SYN‑ACK, ACK) 🤝
+
+To create a reliable TCP connection, the client and server use a three‑step handshake:
+
+1. **SYN** – Client sends a segment with the SYN flag set to the server (e.g., from `10.0.2.15:54362` to `34.107.221.82:80`).  
+2. **SYN‑ACK** – Server responds with SYN+ACK to acknowledge the request and propose its own sequence number.  
+3. **ACK** – Client sends a final ACK to confirm, and the connection becomes established.[page:0][web:31]
+
+This process ensures both sides agree on initial sequence numbers and confirms that the server port is open and reachable.[page:0][web:12] In the lab, the handshake is visible just before the HTTP GET request to `/success.txt` on port 80.📡[page:1]
+
+---
+
+## 3. Ports, Open vs Closed
+
+### 3.1 What is a Port?
+
+A port is a 16‑bit logical identifier that allows multiple applications to share the same IP address but still receive the correct traffic.[page:0] Well‑known ports 0–1023 map to common services such as HTTP (80), HTTPS (443), DNS (53), and SSH (22).[page:0][web:12]
+
+In the lab:
+
+- Client ephemeral ports (e.g., 54362) are used as TCP/UDP source ports.  
+- Destination ports include 53/UDP for DNS and 80/TCP for HTTP.[page:1]
+
+### 3.2 Open vs Closed Ports 🧱
+
+- **Open port**: There is a listening service bound to that port.  
+  - For TCP, an open port responds to a SYN with SYN‑ACK, allowing the handshake to complete.[web:18]  
+  - For UDP, an open port typically responds with a valid application‑layer reply (e.g., DNS answer).[web:18]
+
+- **Closed port**: No listening service exists.  
+  - For TCP, the host normally sends a RST (reset) packet in response to a SYN, or no response if filtered by a firewall.[web:28]  
+  - For UDP, closed or filtered ports often result in no response or an ICMP error.[web:18]
+
+From a SOC point of view, open ports define the exposed attack surface, while sudden changes in open ports or unexpected services on non‑standard ports can indicate compromise or misconfiguration.[web:26]
+
+---
+
+## 4. Application‑Layer Protocols: HTTP and DNS
+
+### 4.1 What is HTTP? 🌐
+
+Hypertext Transfer Protocol (HTTP) is an application‑layer protocol used by web browsers and servers to exchange resources like HTML, images, and JSON over TCP (commonly port 80 or 443 as HTTPS).[web:32] It follows a request–response model: the client sends an HTTP request (method, path, headers), and the server returns a status code and payload.[web:32]
+
+In the capture:
+
+- The browser sends `GET /success.txt?ipv4 HTTP/1.1` with headers like `Host: detectportal.firefox.com` and `User-Agent: Mozilla/...`.[page:1][web:29]  
+- The server at `34.107.221.82` replies with `HTTP/1.1 200 OK` and a small text body confirming connectivity.[page:1]
+
+These headers and status codes are extremely valuable for SOC investigations (e.g., identifying suspicious user agents, unusual URLs, or exfiltration via HTTP).💻[web:26]
+
+### 4.2 What is DNS? 🧾
+
+Domain Name System (DNS) is the “phonebook of the Internet” that translates human‑readable domain names (like `detectportal.firefox.com`) into IP addresses so that clients can connect to servers.[web:22][web:19] DNS uses a distributed hierarchy of servers (root, TLD, authoritative) to resolve names.[web:29][web:33]
+
+In the lab:
+
+- `10.0.2.15` sends a DNS query from an ephemeral UDP source port to `10.0.2.3` on destination port 53.  
+- The response includes A/AAAA records and CNAME chains pointing to Mozilla connectivity domains used by Firefox to test internet access.[page:1][web:29]
+
+From a SOC viewpoint:
+
+- DNS is critical for detecting malware indicators, as many threats rely on domain names for command‑and‑control and data exfiltration.[web:22][web:26]
+
+---
+
+## 5. IP Addresses and Traffic Flows
+
+### 5.1 What is an IP Address?
+
+An IP address is a numerical label assigned to a device on a network so routers know where to forward packets.[web:33] IPv4 addresses look like `10.0.2.15`, while IPv6 addresses look like `fd00::1`; both uniquely identify endpoints within their scope.[web:33]
+
+In this lab:
+
+- `10.0.2.15` – Private IPv4 address of the VM.
+- `10.0.2.3` – Local DNS resolver.
+- `34.107.221.82` – Public web server used by Firefox’s connectivity check.[page:1][web:29]
+
+### 5.2 End‑to‑End Flow 🌍
+
+Typical sequence when the browser accesses `http://detectportal.firefox.com/success.txt`:
+
+1. Browser issues a DNS query for `detectportal.firefox.com` via UDP/53 to `10.0.2.3`.  
+2. DNS server returns the IP address (e.g., `34.107.221.82`).[web:29][web:19]  
+3. Client initiates a TCP three‑way handshake with `34.107.221.82:80`.  
+4. After the handshake, browser sends HTTP GET; server responds with HTTP 200 OK.[page:1][web:32]
+
+This illustrates how DNS, TCP, HTTP, ports, and IPs all combine to deliver a simple web page—a process SOC analysts must understand deeply when investigating alerts.[web:26]
+
+---
+
+## 6. SOC Observations and Takeaways 🛡️
+
+- Traffic patterns and domains observed here match legitimate Firefox connectivity checks and OCSP/PKI infrastructure, with no obvious signs of malicious activity in this small dataset.[page:1][web:29]
+- The exercise demonstrates how to:
+  - Trace a full TCP handshake.
+  - Interpret DNS queries and responses.
+  - Inspect HTTP headers and payloads for context.  
+  These skills are foundational for intrusion detection, threat hunting, and incident response.[web:26][web:11]
+
+Future improvements could include examining HTTPS/TLS handshakes, testing with deliberate port scans, and correlating PCAP findings with SIEM logs to simulate a more realistic SOC workflow.🚀[web:26]
